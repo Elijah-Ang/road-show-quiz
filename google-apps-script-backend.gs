@@ -1,8 +1,7 @@
 const HEADERS = [
   "Timestamp",
-  "First Name",
-  "Email",
-  "Phone Number",
+  "Name",
+  "Contact Number",
   "Wants Future Follow Up",
   "Dominant Letter",
   "Dominant Archetype",
@@ -35,9 +34,8 @@ function doPost(e) {
 
     sheet.appendRow([
       safeValue_(payload.timestamp),
-      safeContact_(payload.firstName || payload.fullName),
-      safeContact_(payload.email),
-      safeContact_(payload.phoneNumber),
+      safeContact_(payload.name || payload.firstName || payload.fullName),
+      safeContact_(payload.contactNumber || payload.phoneNumber),
       Boolean(payload.wantsFutureFollowUp || payload.leadInterested),
       safeValue_(payload.dominantLetter),
       safeValue_(payload.dominantArchetype),
@@ -75,11 +73,29 @@ function ensureHeaderRow_(sheet) {
     return;
   }
 
-  const existingHeaders = sheet.getRange(1, 1, 1, HEADERS.length).getValues()[0];
+  removeDeprecatedEmailColumn_(sheet);
+
+  const headerColumnCount = Math.max(sheet.getLastColumn(), HEADERS.length);
+  const existingHeaders = sheet.getRange(1, 1, 1, headerColumnCount).getValues()[0];
   const needsUpdate = HEADERS.some((header, index) => existingHeaders[index] !== header);
 
-  if (needsUpdate) {
+  if (needsUpdate || existingHeaders.length !== HEADERS.length) {
+    sheet.getRange(1, 1, 1, headerColumnCount).clearContent();
     sheet.getRange(1, 1, 1, HEADERS.length).setValues([HEADERS]);
+  }
+}
+
+function removeDeprecatedEmailColumn_(sheet) {
+  const lastColumn = sheet.getLastColumn();
+  if (lastColumn === 0) {
+    return;
+  }
+
+  const headers = sheet.getRange(1, 1, 1, lastColumn).getValues()[0];
+  const emailColumnIndex = headers.indexOf("Email");
+
+  if (emailColumnIndex !== -1) {
+    sheet.deleteColumn(emailColumnIndex + 1);
   }
 }
 
