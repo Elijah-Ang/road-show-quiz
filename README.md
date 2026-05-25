@@ -22,6 +22,8 @@ Static retirement personality quiz intended for GitHub Pages hosting.
 
 Opening `interactive_retirement_quiz.html` locally may work for basic testing, but final submission testing should be done from the GitHub Pages URL because that is the production environment.
 
+The follow-up form collects optional first name, email address, and phone number. Blank fields are submitted as `NA`. If a visitor chooses no future follow-up, first name, email address, and phone number are all submitted as `NA`.
+
 Security and privacy notes:
 
 - Do not put private API keys in frontend HTML.

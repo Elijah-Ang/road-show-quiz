@@ -1,9 +1,9 @@
 const HEADERS = [
   "Timestamp",
-  "Full Name",
+  "First Name",
   "Email",
-  "Consent",
-  "Lead Interested",
+  "Phone Number",
+  "Wants Future Follow Up",
   "Dominant Letter",
   "Dominant Archetype",
   "Q1 Answer",
@@ -27,9 +27,7 @@ function doPost(e) {
     const payload = parsePayload_(e);
     const sheet = SpreadsheetApp.getActiveSpreadsheet().getActiveSheet();
 
-    if (sheet.getLastRow() === 0) {
-      sheet.appendRow(HEADERS);
-    }
+    ensureHeaderRow_(sheet);
 
     const selectedAnswers = Array.isArray(payload.selectedAnswers)
       ? payload.selectedAnswers
@@ -37,10 +35,10 @@ function doPost(e) {
 
     sheet.appendRow([
       safeValue_(payload.timestamp),
-      safeValue_(payload.fullName),
-      safeValue_(payload.email),
-      Boolean(payload.consent),
-      Boolean(payload.leadInterested),
+      safeContact_(payload.firstName || payload.fullName),
+      safeContact_(payload.email),
+      safeContact_(payload.phoneNumber),
+      Boolean(payload.wantsFutureFollowUp || payload.leadInterested),
       safeValue_(payload.dominantLetter),
       safeValue_(payload.dominantArchetype),
       safeValue_(payload.q1Answer),
@@ -71,6 +69,20 @@ function doPost(e) {
   }
 }
 
+function ensureHeaderRow_(sheet) {
+  if (sheet.getLastRow() === 0) {
+    sheet.appendRow(HEADERS);
+    return;
+  }
+
+  const existingHeaders = sheet.getRange(1, 1, 1, HEADERS.length).getValues()[0];
+  const needsUpdate = HEADERS.some((header, index) => existingHeaders[index] !== header);
+
+  if (needsUpdate) {
+    sheet.getRange(1, 1, 1, HEADERS.length).setValues([HEADERS]);
+  }
+}
+
 function parsePayload_(e) {
   if (!e || !e.postData || !e.postData.contents) {
     return {};
@@ -89,6 +101,15 @@ function safeValue_(value) {
   }
 
   return String(value);
+}
+
+function safeContact_(value) {
+  if (value === null || value === undefined) {
+    return "NA";
+  }
+
+  const stringValue = String(value).trim();
+  return stringValue || "NA";
 }
 
 function safeNumber_(value) {
